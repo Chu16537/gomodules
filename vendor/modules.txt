@@ -1,0 +1,30 @@
+# github.com/arangodb/go-driver v1.3.3
+## explicit
+github.com/arangodb/go-driver
+github.com/arangodb/go-driver/cluster
+github.com/arangodb/go-driver/http
+github.com/arangodb/go-driver/util
+# github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e
+github.com/arangodb/go-velocypack
+# github.com/fatih/color v1.13.0
+## explicit
+github.com/fatih/color
+# github.com/json-iterator/go v1.1.12
+## explicit
+github.com/json-iterator/go
+# github.com/mattn/go-colorable v0.1.9
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.14
+github.com/mattn/go-isatty
+# github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421
+github.com/modern-go/concurrent
+# github.com/modern-go/reflect2 v1.0.2
+github.com/modern-go/reflect2
+# github.com/pkg/errors v0.9.1
+github.com/pkg/errors
+# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+# gopkg.in/yaml.v2 v2.4.0
+## explicit
+gopkg.in/yaml.v2

@@ -12,30 +12,27 @@ import (
 type Config struct {
 	ArangoDB *ArangoDB `yaml:"Arango,omitempty"`
 	Grpc     *Grpc     `yaml:"Grpc,omitempty"`
-	// Redis     *Redis     `yaml:"redis,omitempty"`
-	// Nats      *Nats      `yaml:"nats,omitempty"`
-
-	RetryCount int           `yaml:"retryCount,omitempty"`
-	RetryTime  time.Duration `yaml:"retryTime,omitempty"`
 }
 
 // ArangoDB DB
 type ArangoDB struct {
-	Addr         string `yaml:"addr,omitempty"`
-	Database     string `yaml:"database,omitempty"`
-	Username     string `yaml:"username,omitempty"`
-	Password     string `yaml:"password,omitempty"`
-	HttpProtocol string `yaml:"httpProtocol,omitempty"`
+	Addr         string        `yaml:"addr,omitempty"`
+	Database     string        `yaml:"database,omitempty"`
+	Username     string        `yaml:"username,omitempty"`
+	Password     string        `yaml:"password,omitempty"`
+	HttpProtocol string        `yaml:"httpProtocol,omitempty"`
+	RetryCount   int           `yaml:"retryCount,omitempty"`
+	RetryTime    time.Duration `yaml:"retryTime,omitempty"`
 }
 
 type Grpc struct {
-	Addr string `yaml:"addr,omitempty"`
+	Addr       string        `yaml:"addr,omitempty"`
+	RetryCount int           `yaml:"retryCount,omitempty"`
+	RetryTime  time.Duration `yaml:"retryTime,omitempty"`
 }
 
-var Env *Config
-
 // 讀取
-func Init() error {
+func Load() (*Config, error) {
 	configByte, err := ioutil.ReadFile("env.yaml")
 
 	if err != nil {
@@ -45,14 +42,15 @@ func Init() error {
 
 	if err != nil {
 		logger.Error("env Init Err:%v", err)
-		return err
+		return nil, err
 	}
 
-	err = yaml.Unmarshal(configByte, &Env)
+	env := &Config{}
+	err = yaml.Unmarshal(configByte, env)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return env, nil
 }

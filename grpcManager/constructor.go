@@ -24,6 +24,10 @@ func (h *Handle) GetCtx() context.Context {
 	return h.ctx
 }
 
+func (h *Handle) GetServer() *grpc.Server {
+	return h.server
+}
+
 func Create(c context.Context, config env.Grpc) (error, *Handle) {
 	logger.Debug("grpc Create Start")
 	defer logger.Debug("grpc Creat End")
@@ -70,7 +74,7 @@ func newServer(h *Handle) error {
 
 // 檢查連線是否存在
 func (h *Handle) checkLoop() {
-	tick := time.NewTicker(h.config.RetryTime * time.Second)
+	tick := time.NewTicker(h.config.RetryTime * time.Millisecond)
 	defer tick.Stop()
 
 	for {

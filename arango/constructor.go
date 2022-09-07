@@ -80,7 +80,7 @@ func connect(h *Handle) error {
 
 // ping db 是否存活
 func (h *Handle) checkLoop(client driver.Client) {
-	tick := time.NewTicker(5 * time.Second)
+	tick := time.NewTicker(h.config.RetryTime * time.Millisecond)
 	defer tick.Stop()
 
 	for {
@@ -99,7 +99,6 @@ func (h *Handle) checkLoop(client driver.Client) {
 				if retryErr == nil {
 					return
 				}
-
 			}
 		}
 	}

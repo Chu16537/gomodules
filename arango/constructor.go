@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Chu16537/gomodules/env"
+	"github.com/Chu16537/gomodules/util"
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"
 
@@ -12,27 +13,33 @@ import (
 )
 
 type Handle struct {
-	db     driver.Database
 	ctx    context.Context
+	retry  *util.Retry
 	config env.ArangoDB
+	db     driver.Database
 }
 
-func Create(c context.Context, config env.ArangoDB) *Handle {
+func Create(c context.Context, config env.ArangoDB) (error, *Handle) {
 	logger.Debug("arango Creat Start")
-	defer logger.Debug("arango Creat Success")
+	defer logger.Debug("arango Creat End")
 
 	h := &Handle{
 		ctx:    c,
 		config: config,
 	}
 
-	err := connect(h)
+	h.retry = util.NewRetry(config.RetryCount, config.RetryTime)
+
+	err, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
+		err := connect(h)
+		return err, nil
+	})
 
 	if err != nil {
-		go retry(h)
+		return err, nil
 	}
 
-	return h
+	return nil, h
 }
 
 // 連線實做
@@ -64,7 +71,7 @@ func connect(h *Handle) error {
 		return dbErr
 	}
 
-	go pingLoop(h, client)
+	go h.checkLoop(client)
 	h.db = db
 
 	logger.Debug("arango connect Success")
@@ -72,7 +79,7 @@ func connect(h *Handle) error {
 }
 
 // ping db 是否存活
-func pingLoop(h *Handle, client driver.Client) {
+func (h *Handle) checkLoop(client driver.Client) {
 	tick := time.NewTicker(5 * time.Second)
 	defer tick.Stop()
 
@@ -82,26 +89,18 @@ func pingLoop(h *Handle, client driver.Client) {
 			return
 		case <-tick.C:
 			if _, err := client.Version(h.ctx); err != nil {
-				logger.Error("arango pingLoop Fail go retry")
-				go retry(h)
-				return
+				logger.Error("arango ping Fail")
+
+				retryErr, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
+					err := connect(h)
+					return err, nil
+				})
+
+				if retryErr == nil {
+					return
+				}
+
 			}
-		}
-	}
-}
-
-// 重新創db
-func retry(h *Handle) {
-	tick := time.NewTicker(h.config.RetryTime * time.Millisecond)
-	defer tick.Stop()
-
-	select {
-	case <-h.ctx.Done():
-		return
-	case <-tick.C:
-		err := connect(h)
-		if err == nil {
-			return
 		}
 	}
 }

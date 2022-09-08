@@ -1,7 +1,6 @@
 package util
 
 import (
-	"context"
 	"time"
 )
 
@@ -19,22 +18,52 @@ func NewRetry(count int, interval time.Duration) *Retry {
 
 }
 
-func (r *Retry) Run(c context.Context, fn func() (error, interface{})) (error, interface{}) {
+// 重試 無限
+func (r *Retry) RunLoop(f func() (error, interface{})) (error, interface{}) {
 	var err error
-	var result interface{}
+	var res interface{}
+
+	// 先跑第一次，若成功則直接回傳
+	err, res = f()
+	if err == nil {
+		return nil, res
+	}
+
+	tick := time.NewTicker(r.interval * time.Millisecond)
+	defer tick.Stop()
+
+	for range tick.C {
+		err, res := f()
+
+		if err == nil {
+			return nil, res
+		}
+	}
+
+	return err, res
+}
+
+// 重試 限制次數
+func (r *Retry) RunCount(f func() (error, interface{})) (error, interface{}) {
+	var err error
+	var res interface{}
+
+	// 先跑第一次，若成功則直接回傳
+	err, res = f()
+	if err == nil {
+		return nil, res
+	}
 
 	tick := time.NewTicker(r.interval * time.Millisecond)
 	defer tick.Stop()
 
 	maxCount := r.count
 
-	select {
-	case <-c.Done():
-		return nil, nil
-	case <-tick.C:
-		err, result = fn()
+	for range tick.C {
+		err, res := f()
+
 		if err == nil {
-			return nil, result
+			return nil, res
 		}
 
 		maxCount--
@@ -43,5 +72,5 @@ func (r *Retry) Run(c context.Context, fn func() (error, interface{})) (error, i
 		}
 	}
 
-	return err, result
+	return err, res
 }

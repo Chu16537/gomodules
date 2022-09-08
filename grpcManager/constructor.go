@@ -39,7 +39,7 @@ func Create(c context.Context, config env.Grpc) (error, *Handle) {
 
 	h.retry = util.NewRetry(config.RetryCount, config.RetryTime)
 
-	err, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
+	err, _ := h.retry.RunCount(func() (error, interface{}) {
 		err := newServer(h)
 		return err, nil
 	})
@@ -92,7 +92,7 @@ func checkLoop(h *Handle) {
 
 				logger.Error("failed to server: %v", err)
 
-				retryErr, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
+				retryErr, _ := h.retry.RunLoop(func() (error, interface{}) {
 					h.lis.Close()
 					h.server.Stop()
 					err := newServer(h)

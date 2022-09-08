@@ -2,11 +2,6 @@ package env
 
 import "time"
 
-type Config struct {
-	ArangoDB *ArangoDB `yaml:"Arango,omitempty"`
-	Grpc     *Grpc     `yaml:"Grpc,omitempty"`
-}
-
 // ArangoDB DB
 type ArangoDB struct {
 	Addr         string        `yaml:"addr,omitempty"`

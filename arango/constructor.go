@@ -40,7 +40,7 @@ func Create(c context.Context, config env.ArangoDB) (error, *Handle) {
 
 	h.retry = util.NewRetry(config.RetryCount, config.RetryTime)
 
-	err, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
+	err, _ := h.retry.RunCount(func() (error, interface{}) {
 		err := connect(h)
 		return err, nil
 	})
@@ -101,7 +101,7 @@ func checkLoop(h *Handle, client driver.Client) {
 			if _, err := client.Version(h.ctx); err != nil {
 				logger.Error("arango checkLoop Fail")
 
-				retryErr, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
+				retryErr, _ := h.retry.RunLoop(func() (error, interface{}) {
 					err := connect(h)
 					return err, nil
 				})

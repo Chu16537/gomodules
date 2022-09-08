@@ -19,6 +19,16 @@ type Handle struct {
 	db     driver.Database
 }
 
+// 取得db
+func (h *Handle) Get() *Handle {
+	if h.db == nil {
+		logger.Error("arango Get Fail")
+		return nil
+	}
+	return h
+}
+
+// 創建
 func Create(c context.Context, config env.ArangoDB) (error, *Handle) {
 	logger.Debug("arango Creat Start")
 	defer logger.Debug("arango Creat End")
@@ -71,15 +81,15 @@ func connect(h *Handle) error {
 		return dbErr
 	}
 
-	go h.checkLoop(client)
 	h.db = db
+	go checkLoop(h, client)
 
 	logger.Debug("arango connect Success")
 	return nil
 }
 
 // ping db 是否存活
-func (h *Handle) checkLoop(client driver.Client) {
+func checkLoop(h *Handle, client driver.Client) {
 	tick := time.NewTicker(h.config.RetryTime * time.Millisecond)
 	defer tick.Stop()
 
@@ -89,7 +99,7 @@ func (h *Handle) checkLoop(client driver.Client) {
 			return
 		case <-tick.C:
 			if _, err := client.Version(h.ctx); err != nil {
-				logger.Error("arango ping Fail")
+				logger.Error("arango checkLoop Fail")
 
 				retryErr, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
 					err := connect(h)

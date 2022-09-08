@@ -65,7 +65,7 @@ func newServer(h *Handle) error {
 	h.server = grpc.NewServer()
 	reflection.Register(h.server)
 
-	go h.checkLoop()
+	go checkLoop(h)
 
 	logger.Debug("grpc newServer Success")
 
@@ -73,7 +73,7 @@ func newServer(h *Handle) error {
 }
 
 // 檢查連線是否存在
-func (h *Handle) checkLoop() {
+func checkLoop(h *Handle) {
 	tick := time.NewTicker(h.config.RetryTime * time.Millisecond)
 	defer tick.Stop()
 
@@ -83,10 +83,18 @@ func (h *Handle) checkLoop() {
 			return
 		case <-tick.C:
 			if err := h.server.Serve(h.lis); err != nil {
+
+				select {
+				case <-h.ctx.Done():
+					return
+				default:
+				}
+
 				logger.Error("failed to server: %v", err)
 
 				retryErr, _ := h.retry.Run(h.ctx, func() (error, interface{}) {
 					h.lis.Close()
+					h.server.Stop()
 					err := newServer(h)
 					return err, nil
 				})
